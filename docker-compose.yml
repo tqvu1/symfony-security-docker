@@ -1,21 +1,38 @@
-version: '3'
+version: '3.8'
 
 services:
-###> doctrine/doctrine-bundle ###
-  database:
-    image: postgres:${POSTGRES_VERSION:-13}-alpine
+  test-database:
+    container_name: test-database
+    image: mariadb:10.5
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-app}
-      # You should definitely change the password in production
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
-      POSTGRES_USER: ${POSTGRES_USER:-symfony}
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mase_hot
+      MYSQL_USER: blog
+      MYSQL_PASSWORD: redw94KfeWv
+    ports:
+      - '4308:3306'
     volumes:
-      - db-data:/var/lib/postgresql/data:rw
-      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
-      # - ./docker/db/data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+      - database-mysql:/var/lib/mysql
+  test-php:
+    container_name: test-php
+    build:
+      context: .
+      dockerfile: ./docker/php/local/Dockerfile
+    ports:
+      - '9002:9000'
+    volumes:
+      - .:/mase/
+  test-nginx:
+    container_name: test-nginx
+    build:
+      context: .
+      dockerfile: ./docker/nginx/local/Dockerfile
+    ports:
+      - '8082:80'
+    volumes:
+      - .:/mase/
+    depends_on:
+      - test-php
 
 volumes:
-###> doctrine/doctrine-bundle ###
-  db-data:
-###< doctrine/doctrine-bundle ###
+  database-mysql:
